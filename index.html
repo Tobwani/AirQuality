@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Smart Climate Control</title>
+  <title>Smart Climate Control Pro</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -83,29 +83,9 @@
 
     .last-update {
       color: #8a93a6;
-      font-size: 0.85rem;
+      font-size: 0.75rem;
       text-align: center;
-      margin-top: 12px;
-    }
-
-    .sensor-status {
-      padding: 12px;
-      border-radius: 12px;
-      text-align: center;
-      margin-top: 15px;
-      background: rgba(255, 255, 255, 0.08);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-
-    .status-connected {
-      color: #51cf66;
-    }
-
-    .status-disconnected {
-      color: #ff6b6b;
+      margin-top: 8px;
     }
 
     .recommendation-card {
@@ -268,10 +248,12 @@
     }
 
     .timer-display {
+      min-width: 65px;
       background: rgba(255, 255, 255, 0.1);
       border-radius: 8px;
       padding: 8px 15px;
       font-weight: 600;
+      text-align: center;
     }
 
     .ventilation-controls {
@@ -305,6 +287,66 @@
       color: #ff6b6b;
       font-weight: 500;
       margin-top: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+
+    .exchange-rate {
+      font-size: 0.9rem;
+      margin-top: 10px;
+      opacity: 0.8;
+    }
+
+    .room-config {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 15px;
+      margin-top: 20px;
+    }
+
+    .config-input-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+      align-items: center;
+    }
+
+    .config-label {
+      min-width: 120px;
+      font-size: 0.9rem;
+    }
+
+    .config-input {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: white;
+      width: 100%;
+    }
+
+    .window-type {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .window-btn {
+      flex: 1;
+      padding: 8px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: white;
+      text-align: center;
+      cursor: pointer;
+    }
+
+    .window-btn.active {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: var(--accent);
     }
 
     @media (max-width: 768px) {
@@ -315,6 +357,11 @@
       .dashboard-title h1 {
         font-size: 2rem;
       }
+
+      .config-input-group {
+        flex-direction: column;
+        align-items: flex-start;
+      }
     }
   </style>
 </head>
@@ -323,8 +370,8 @@
   <div class="container">
     <!-- Header -->
     <div class="dashboard-title">
-      <h1>Smart Climate Control</h1>
-      <p class="lead">Raumklima-Überwachung mit intelligenten Empfehlungen</p>
+      <h1>Smart Climate Control Pro</h1>
+      <p class="lead">Professionelle Raumklima-Überwachung mit physikalischer Lüftungsmodellierung</p>
     </div>
 
     <div class="row g-4">
@@ -342,6 +389,7 @@
               <div class="sensor-value temp-display">-- °C</div>
               <div class="status-badge">Wird geladen...</div>
               <div class="optimal-range">Optimal: <span id="temp-optimal-range">20-22°C</span></div>
+              <div class="last-update">Letzte Aktualisierung: --:--:--</div>
             </div>
 
             <div class="sensor-item">
@@ -349,13 +397,38 @@
               <div class="sensor-value humidity-display">-- %</div>
               <div class="status-badge">Wird geladen...</div>
               <div class="optimal-range">Optimal: 40-60%</div>
+              <div class="last-update">Letzte Aktualisierung: --:--:--</div>
             </div>
           </div>
 
-          <div class="sensor-status status-disconnected mt-4">
-            <i class="fas fa-sensor"></i>
-            <span class="sensor-status-text">Sensor nicht verbunden</span>
-            <div class="last-update">Letzte Aktualisierung: --:--:--</div>
+          <!-- Raumkonfiguration -->
+          <div class="room-config mt-4">
+            <h3 class="h6 mb-3">Raum- & Fensterkonfiguration</h3>
+
+            <div class="config-input-group">
+              <span class="config-label">Raumvolumen (m³)</span>
+              <input type="number" class="config-input" id="room-volume" min="10" max="200" value="50">
+            </div>
+
+            <div class="config-input-group">
+              <span class="config-label">Fenstergröße (m²)</span>
+              <input type="number" class="config-input" id="window-area" min="0.5" max="10" step="0.1" value="2.0">
+            </div>
+
+            <div class="mt-2">
+              <div class="config-label mb-2">Fensterposition</div>
+              <div class="window-type">
+                <div class="window-btn" data-type="tilted">
+                  <i class="fas fa-window-restore me-1"></i> Gekippt
+                </div>
+                <div class="window-btn" data-type="half">
+                  <i class="fas fa-window-maximize me-1"></i> Halb offen
+                </div>
+                <div class="window-btn active" data-type="full">
+                  <i class="fas fa-external-link-alt me-1"></i> Ganz offen
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -435,12 +508,17 @@
               Wetterdaten</div>
 
             <div class="rain-warning" id="rain-warning" style="display: none;">
-              <i class="fas fa-umbrella me-2"></i>Regen erwartet - Lüften nur eingeschränkt empfohlen
+              <i class="fas fa-umbrella"></i> Regen erwartet - Lüften nur eingeschränkt empfohlen
+            </div>
+
+            <div class="exchange-rate" id="exchange-rate">
+              <i class="fas fa-exchange-alt me-2"></i>
+              <span>Geschätzter Luftaustausch: -- m³/h</span>
             </div>
 
             <div class="ventilation-timer">
               <div class="timer-display" id="ventilation-timer">--:--</div>
-              <div id="ventilation-time">verbleibend</div>
+              <div id="ventilation-time">empfohlene Dauer</div>
             </div>
 
             <div class="progress-container mt-4">
@@ -502,11 +580,28 @@
     </div>
 
     <footer>
-      <p>ESP32 Sensor | DHT11 | WeatherAPI | Intelligente Lüftungsempfehlung</p>
+      <p>ESP32 Sensor | DHT11 | WeatherAPI | Physikalische Lüftungsmodellierung</p>
     </footer>
   </div>
 
   <script>
+    // Physikalische Konstanten
+    const PHYSICS_CONSTANTS = {
+      AIR_DENSITY: 1.204,     // kg/m³ bei 20°C
+      SPECIFIC_HEAT: 1005,    // J/(kg·K) für Luft
+      GRAVITY: 9.81,          // m/s²
+      IDEAL_GAS_CONSTANT: 287,// J/(kg·K)
+      WIND_INFLUENCE: 0.25,   // Einflussfaktor für Wind
+      THERMAL_COEFFICIENT: 0.3 // Einflussfaktor für thermischen Auftrieb
+    };
+
+    // Fensterkonfiguration - Realistische Werte für Lüftungseffizienz
+    const WINDOW_CONFIG = {
+      TILTED: 0.05,    // Gekippt (nur 5% der Fläche effektiv)
+      HALF_OPEN: 0.35,  // Halb offen
+      FULL_OPEN: 0.7    // Ganz offen
+    };
+
     // Firebase Konfiguration
     const firebaseConfig = {
       apiKey: "AIzaSyD_TMfT84se5lSrRxyg6HKN40HORaGup4w",
@@ -526,9 +621,6 @@
     const humidityValueElement = document.querySelector('.humidity-display');
     const tempStatusElement = document.querySelectorAll('.status-badge')[0];
     const humidityStatusElement = document.querySelectorAll('.status-badge')[1];
-    const sensorStatusElement = document.querySelector('.sensor-status');
-    const sensorStatusText = document.querySelector('.sensor-status-text');
-    const lastUpdateElement = document.querySelector('.sensor-status .last-update');
     const cityInput = document.getElementById('city-input');
     const updateWeatherBtn = document.getElementById('update-weather');
     const ventilationText = document.getElementById('ventilation-text');
@@ -544,205 +636,264 @@
     const resetBtn = document.getElementById('reset-ventilation');
     const tempOptimalRange = document.getElementById('temp-optimal-range');
     const rainWarning = document.getElementById('rain-warning');
-
-    // Wetterdaten-Elemente
+    const exchangeRateElement = document.getElementById('exchange-rate');
+    const tempLastUpdate = document.querySelectorAll('.last-update')[0];
+    const humidityLastUpdate = document.querySelectorAll('.last-update')[1];
     const outsideTempElement = document.getElementById('outside-temp');
     const outsideHumidityElement = document.getElementById('outside-humidity');
     const windSpeedElement = document.getElementById('wind-speed');
     const cloudsElement = document.getElementById('clouds');
     const weatherIconElement = document.getElementById('weather-icon');
     const weatherDescriptionElement = document.getElementById('weather-description');
+    const roomVolumeInput = document.getElementById('room-volume');
+    const windowAreaInput = document.getElementById('window-area');
+    const windowTypeButtons = document.querySelectorAll('.window-btn');
 
-    // Sensor-Status und Zeitstempel
-    let lastUpdateTime = null;
-    let sensorConnected = false;
+    // Sensor-Daten und Status
     let insideTemp = null;
     let insideHumidity = null;
     let outsideTemp = null;
     let outsideHumidity = null;
     let windSpeed = null;
-    let currentMood = null;
+    let currentMood = "perfect";
     let weatherData = {};
-    let sensorTimeout = null;
     let ventilationActive = false;
     let ventilationDuration = 0;
     let ventilationStartTime = null;
     let ventilationInterval = null;
     let weatherUpdateInterval = null;
     let currentCity = "Hoppegarten";
+    let windowType = "full";
+    let roomVolume = 50;
+    let windowArea = 2.0;
+    let airExchangeRate = 0;
+    let effectiveWindowArea = 0;
 
     // Funktion zur Formatierung des Zeitstempels
     function formatTime(date) {
-      return date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+      return date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     }
 
     // Funktion zur Bestimmung des Temperatur-Status
     function getTemperatureStatus(temp) {
       if (temp === null) return "Keine Daten";
 
-      const optimalMin = currentMood === "warm" ? 20 : 20;
-      const optimalMax = currentMood === "warm" ? 24 : 22;
+      let min, max;
+      switch (currentMood) {
+        case "warm":
+          min = 18;
+          max = 22;
+          break;
+        case "cold":
+          min = 20;
+          max = 24;
+          break;
+        default:
+          min = 20;
+          max = 22;
+      }
 
-      if (temp < optimalMin) return "Zu kühl";
-      if (temp >= optimalMin && temp <= optimalMax) return "Ideal";
-      return "Zu warm";
+      if (temp < min) return "Zu kühl";
+      if (temp > max) return "Zu warm";
+      return "Ideal";
     }
 
     // Funktion zur Bestimmung des Luftfeuchtigkeits-Status
     function getHumidityStatus(humidity) {
       if (humidity === null) return "Keine Daten";
       if (humidity < 40) return "Zu trocken";
-      if (humidity >= 40 && humidity <= 60) return "Ideal";
-      return "Zu feucht";
+      if (humidity > 70) return "Zu feucht";
+      if (humidity > 60) return "Hoch aber OK";
+      return "Ideal";
     }
 
-    // Funktion zur Überprüfung des Sensor-Status
-    function checkSensorStatus() {
-      const now = new Date();
-      const timeDiff = lastUpdateTime ? (now - lastUpdateTime) / 1000 : null;
-
-      // Clear previous timeout
-      if (sensorTimeout) clearTimeout(sensorTimeout);
-
-      if (timeDiff && timeDiff < 120) {
-        sensorStatusElement.classList.remove('status-disconnected');
-        sensorStatusElement.classList.add('status-connected');
-        sensorStatusText.textContent = 'Sensor verbunden';
-        sensorConnected = true;
-
-        // Set timeout to check again in 30 seconds
-        sensorTimeout = setTimeout(checkSensorStatus, 30000);
-      } else {
-        sensorStatusElement.classList.remove('status-connected');
-        sensorStatusElement.classList.add('status-disconnected');
-        sensorStatusText.textContent = 'Sensor nicht verbunden';
-        sensorConnected = false;
-
-        // Check again in 10 seconds
-        sensorTimeout = setTimeout(checkSensorStatus, 10000);
+    // Physikalische Berechnung des Luftaustauschs (verbessert)
+    function calculateAirExchange() {
+      // Effektive Fensterfläche basierend auf Öffnungsart
+      switch (windowType) {
+        case "tilted":
+          effectiveWindowArea = windowArea * WINDOW_CONFIG.TILTED;
+          break;
+        case "half":
+          effectiveWindowArea = windowArea * WINDOW_CONFIG.HALF_OPEN;
+          break;
+        case "full":
+          effectiveWindowArea = windowArea * WINDOW_CONFIG.FULL_OPEN;
+          break;
+        default:
+          effectiveWindowArea = windowArea * 0.7;
       }
+
+      // Temperaturdifferenz in Kelvin
+      const deltaTemp = Math.abs(insideTemp - outsideTemp);
+
+      // Windgeschwindigkeit in m/s
+      const windSpeedMs = windSpeed / 3.6;
+
+      // Thermischer Auftrieb (m/s)
+      const thermalFlow = PHYSICS_CONSTANTS.THERMAL_COEFFICIENT *
+        Math.sqrt(PHYSICS_CONSTANTS.GRAVITY * 2.5 * deltaTemp / (insideTemp + 273.15));
+
+      // Gesamte Strömungsgeschwindigkeit (m/s)
+      const airVelocity = Math.sqrt(
+        Math.pow(thermalFlow, 2) +
+        Math.pow(windSpeedMs * PHYSICS_CONSTANTS.WIND_INFLUENCE, 2)
+      );
+
+      // Luftvolumenstrom (m³/s)
+      const airFlow = effectiveWindowArea * airVelocity;
+
+      // Luftwechselrate (1/h)
+      const airExchangeRate = airFlow * 3600 / roomVolume;
+
+      return {
+        rate: airExchangeRate,
+        flow: airFlow * 3600 // m³/h
+      };
     }
 
-    // Funktion zur Berechnung der Lüftungsempfehlung
+    // NEUE PHYSIKALISCHE BERECHNUNG DER LÜFTUNGSDAUER
     function calculateVentilationRecommendation() {
       if (insideTemp === null || insideHumidity === null ||
         outsideTemp === null || outsideHumidity === null || windSpeed === null) {
-        ventilationText.textContent = "Daten werden geladen...";
-        ventilationDetails.textContent = "Warte auf Sensor- und Wetterdaten";
-        ventilationIcon.className = "fas fa-spinner fa-spin ventilation-icon";
-        rainWarning.style.display = "none";
-        return;
+        return {
+          recommendation: "Daten werden geladen...",
+          details: "Warte auf Sensor- und Wetterdaten",
+          icon: "fa-spinner fa-spin",
+          duration: 0,
+          airExchange: 0
+        };
       }
 
-      // Optimalbereiche definieren
-      const optimalTempMin = currentMood === "warm" ? 20 : 20;
-      const optimalTempMax = currentMood === "warm" ? 24 : 22;
-      const optimalHumidityMin = 40;
-      const optimalHumidityMax = 60;
+      // Luftaustausch berechnen
+      const airExchange = calculateAirExchange();
+      airExchangeRate = airExchange.flow;
 
-      // Grundlage für Empfehlung
-      let recommendation = "";
-      let details = "";
+      // Bestimme die optimalen Grenzen
+      let tempMin, tempMax;
+      switch (currentMood) {
+        case "warm":
+          tempMin = 18;
+          tempMax = 22;
+          break;
+        case "cold":
+          tempMin = 20;
+          tempMax = 24;
+          break;
+        default:
+          tempMin = 20;
+          tempMax = 22;
+      }
+
+      // Berechne Abweichungen
+      const tempDeviation = Math.max(0, Math.max(insideTemp - tempMax, tempMin - insideTemp));
+      const humidDeviation = Math.max(
+        0,
+        Math.max(insideHumidity - 60, 40 - insideHumidity)
+      );
+
+      // PHYSIKALISCH KORREKTE DAUERBERECHNUNG
       let duration = 0;
-      let icon = "fa-wind";
-      let rainAlert = false;
+      let recommendation, icon, details = "";
+      const isRaining = weatherData.current?.condition.text.toLowerCase().includes("regen");
+      const isCriticalHumidity = insideHumidity > 70;
+      const isCriticalTemp = insideTemp > 25 || insideTemp < 16;
 
-      // Regenerkennung
-      if (weatherData.current && weatherData.current.condition.text.toLowerCase().includes("regen")) {
-        rainAlert = true;
-        rainWarning.style.display = "block";
+      // Berechnung der benötigten Luftmenge zur Korrektur (in m³)
+      const requiredAirVolume = (tempDeviation * 0.5 + humidDeviation * 0.2) * roomVolume;
+
+      // Berechnung der Lüftungsdauer in Minuten
+      if (airExchange.flow > 0) {
+        duration = (requiredAirVolume / airExchange.flow) * 60;
       } else {
-        rainWarning.style.display = "none";
-      }
-
-      // Lüftungsdauer basierend auf Abweichungen berechnen
-      const tempDeviation = insideTemp > optimalTempMax ? insideTemp - optimalTempMax :
-        insideTemp < optimalTempMin ? optimalTempMin - insideTemp : 0;
-
-      const humidityDeviation = insideHumidity > optimalHumidityMax ? insideHumidity - optimalHumidityMax :
-        insideHumidity < optimalHumidityMin ? optimalHumidityMin - insideHumidity : 0;
-
-      // Lüften nur bei signifikanter Abweichung oder bei Regen nur wenn nötig
-      if (tempDeviation > 1 || humidityDeviation > 10) {
-        // Basisberechnung für Temperaturabweichung
-        if (tempDeviation > 0) {
-          duration += tempDeviation * 2; // 2 Minuten pro Grad Abweichung
-        }
-
-        // Basisberechnung für Luftfeuchtigkeitsabweichung
-        if (humidityDeviation > 0) {
-          duration += humidityDeviation * 0.7; // 0.7 Minuten pro Prozentpunkt
-        }
-
-        // Mindestdauer sicherstellen
-        duration = Math.max(3, duration);
-
-        // Maximaldauer begrenzen
-        duration = Math.min(30, duration);
-
-        // Empfehlungstyp basierend auf Wetter
-        if (rainAlert) {
-          // Bei Regen nur minimales Lüften
-          recommendation = "Fenster ankippen";
-          details = "Regen - Nur minimales Lüften empfohlen";
-          duration = Math.min(5, duration); // Maximal 5 Minuten bei Regen
-          icon = "fa-window-restore";
-        } else if (outsideTemp < insideTemp - 3 && windSpeed < 20) {
-          recommendation = "Fenster voll öffnen";
-          icon = "fa-window-maximize";
-          details = "Optimierung des Raumklimas empfohlen";
-        } else {
-          recommendation = "Fenster ankippen";
-          icon = "fa-window-restore";
-          details = "Optimierung des Raumklimas empfohlen";
-        }
-      } else {
-        recommendation = "Kein Lüften nötig";
-        details = "Optimale Raumwerte";
-        icon = "fa-window-close";
-      }
-
-      // Bei Regen und optimalen Werten kein Lüften empfehlen
-      if (rainAlert && (tempDeviation <= 1 && humidityDeviation <= 5)) {
-        recommendation = "Kein Lüften nötig";
-        details = "Optimale Werte trotz Regen";
-        icon = "fa-window-close";
         duration = 0;
       }
 
-      // Stimmungsbasierte Anpassungen
-      if (currentMood === "unfocused" || currentMood === "headache") {
-        if (recommendation === "Kein Lüften nötig" && insideTemp >= 20) {
+      // Mindest- und Höchstwerte setzen
+      duration = Math.min(60, Math.max(5, duration));
+
+      // Lüftungsempfehlung basierend auf Bedingungen
+      if (isCriticalHumidity || isCriticalTemp) {
+        recommendation = "Fenster voll öffnen";
+        icon = "fa-window-maximize";
+        details = isCriticalHumidity
+          ? "Kritische Luftfeuchtigkeit - dringend lüften!"
+          : "Extreme Temperaturen - sofort lüften!";
+        duration = Math.max(duration, 20);
+      }
+      else if ((currentMood === "unfocused" || currentMood === "headache") && duration < 10) {
+        recommendation = "Fenster ankippen";
+        duration = 10;
+        details = "Frischluftzufuhr zur Steigerung der Konzentration";
+        icon = "fa-window-restore";
+      }
+      else if (duration > 0) {
+        if (isRaining || (insideTemp - outsideTemp) < 2) {
           recommendation = "Fenster ankippen";
-          duration = 5;
-          details = "Frischluft für Konzentration";
           icon = "fa-window-restore";
-        } else if (recommendation !== "Kein Lüften nötig") {
-          duration = Math.max(duration, 5);
-          details += " - Frischluft kann helfen";
+          details = "Optimierung des Raumklimas empfohlen";
+          duration = Math.min(15, duration);
+
+          if (isRaining) {
+            details = "Regen - Eingeschränkte Lüftung empfohlen";
+            duration = Math.min(10, duration);
+          }
+        } else {
+          recommendation = "Fenster voll öffnen";
+          icon = "fa-window-maximize";
+          details = "Optimale Bedingungen zum Lüften";
         }
+      } else {
+        recommendation = "Kein Lüften nötig";
+        icon = "fa-window-close";
+        details = "Optimale Raumwerte";
       }
 
-      // Ergebnisse anzeigen
-      ventilationText.textContent = recommendation;
-      ventilationDetails.textContent = details;
-      ventilationIcon.className = `fas ${icon} ventilation-icon`;
-      ventilationDuration = Math.round(duration * 10) / 10; // Auf eine Nachkommastelle runden
+      return {
+        recommendation,
+        details,
+        icon,
+        duration: Math.round(duration),
+        airExchange: Math.round(airExchange.flow)
+      };
+    }
 
-      // Timer zurücksetzen wenn Lüftung nicht aktiv
+    // Aktualisiere Lüftungsempfehlung
+    function updateVentilationUI() {
+      const recommendation = calculateVentilationRecommendation();
+
+      ventilationText.textContent = recommendation.recommendation;
+      ventilationDetails.textContent = recommendation.details;
+      ventilationIcon.className = `fas ${recommendation.icon} ventilation-icon`;
+
+      airExchangeRate = recommendation.airExchange;
+      exchangeRateElement.innerHTML = `<i class="fas fa-exchange-alt me-2"></i>Geschätzter Luftaustausch: ${airExchangeRate} m³/h`;
+
       if (!ventilationActive) {
-        ventilationTimer.textContent = duration > 0 ? `${ventilationDuration} min` : "--:--";
-        ventilationTime.textContent = duration > 0 ? "empfohlen" : "";
+        ventilationDuration = recommendation.duration;
+        ventilationTimer.textContent = `${ventilationDuration} min`;
+        ventilationTime.textContent = "empfohlene Dauer";
+        ventilationProgress.style.width = "0%";
+      }
 
-        if (duration > 0) {
-          ventilationProgress.style.width = "0%";
-        } else {
-          ventilationProgress.style.width = "0%";
-        }
+      // Regenschauer-Warnung
+      if (weatherData.current?.condition.text.toLowerCase().includes("regen")) {
+        rainWarning.style.display = "flex";
+      } else {
+        rainWarning.style.display = "none";
       }
 
       // Optimalen Temperaturbereich aktualisieren
-      tempOptimalRange.textContent = currentMood === "warm" ? "20-24°C" : "20-22°C";
+      switch (currentMood) {
+        case "warm":
+          tempOptimalRange.textContent = "18-22°C";
+          break;
+        case "cold":
+          tempOptimalRange.textContent = "20-24°C";
+          break;
+        default:
+          tempOptimalRange.textContent = "20-22°C";
+      }
     }
 
     // Lüftungs-Timer starten
@@ -753,12 +904,25 @@
       ventilationStartTime = new Date();
 
       // Timer-UI aktualisieren
-      ventilationTime.textContent = "verbleibend";
+      ventilationTime.textContent = "Lüftung läuft";
       ventilationProgress.style.width = "0%";
 
       // Timer-Intervall starten
       clearInterval(ventilationInterval);
-      ventilationInterval = setInterval(updateVentilationTimer, 1000);
+      ventilationInterval = setInterval(() => {
+        const now = new Date();
+        const elapsedSeconds = (now - ventilationStartTime) / 1000;
+        const progress = Math.min(100, (elapsedSeconds / (ventilationDuration * 60)) * 100);
+
+        ventilationProgress.style.width = `${progress}%`;
+
+        // Timer beenden wenn Ziel erreicht
+        if (progress >= 100) {
+          clearInterval(ventilationInterval);
+          ventilationTime.textContent = "Lüftung abgeschlossen!";
+          ventilationActive = false;
+        }
+      }, 1000);
     }
 
     // Lüftungs-Timer stoppen
@@ -773,39 +937,8 @@
       ventilationActive = false;
       clearInterval(ventilationInterval);
       ventilationTimer.textContent = ventilationDuration > 0 ? `${ventilationDuration} min` : "--:--";
-      ventilationTime.textContent = ventilationDuration > 0 ? "empfohlen" : "";
+      ventilationTime.textContent = ventilationDuration > 0 ? "empfohlene Dauer" : "";
       ventilationProgress.style.width = "0%";
-    }
-
-    // Lüftungs-Timer aktualisieren
-    function updateVentilationTimer() {
-      if (!ventilationStartTime) return;
-
-      const now = new Date();
-      const elapsedSeconds = Math.floor((now - ventilationStartTime) / 1000);
-      const totalSeconds = ventilationDuration * 60;
-      const remainingSeconds = totalSeconds - elapsedSeconds;
-
-      if (remainingSeconds <= 0) {
-        clearInterval(ventilationInterval);
-        ventilationTimer.textContent = "0 min";
-        ventilationTime.textContent = "Fenster schließen!";
-        ventilationProgress.style.width = "100%";
-        ventilationActive = false;
-        return;
-      }
-
-      // Verbleibende Zeit berechnen
-      const minutes = Math.floor(remainingSeconds / 60);
-      const seconds = remainingSeconds % 60;
-      const remainingMinutes = (remainingSeconds / 60).toFixed(1);
-
-      // Timer anzeigen
-      ventilationTimer.textContent = `${remainingMinutes} min`;
-
-      // Fortschrittsbalken aktualisieren
-      const progress = (elapsedSeconds / totalSeconds) * 100;
-      ventilationProgress.style.width = `${Math.min(100, progress)}%`;
     }
 
     // Wetterdaten von WeatherAPI abrufen
@@ -840,7 +973,7 @@
         weatherIconElement.className = `fas fa-${getWeatherIcon(conditionCode, isDay)} weather-icon`;
 
         // Lüftungsempfehlung neu berechnen
-        calculateVentilationRecommendation();
+        updateVentilationUI();
 
       } catch (error) {
         console.error('Fehler beim Abrufen der Wetterdaten:', error);
@@ -849,9 +982,8 @@
       }
     }
 
-    // Funktion zur Bestimmung des Wetter-Icons für WeatherAPI
+    // Funktion zur Bestimmung des Wetter-Icons
     function getWeatherIcon(conditionCode, isDay) {
-      // Gruppierung der Condition Codes
       const clearCodes = [1000];
       const partlyCloudyCodes = [1003];
       const cloudyCodes = [1006, 1009, 1030, 1135, 1147];
@@ -870,7 +1002,51 @@
       }
     }
 
-    // Event-Listener für Lüftungssteuerung
+    // Konfiguration im localStorage speichern
+    function saveConfiguration() {
+      const config = {
+        roomVolume,
+        windowArea,
+        windowType,
+        currentMood
+      };
+      localStorage.setItem('roomConfig', JSON.stringify(config));
+    }
+
+    // Konfiguration aus localStorage laden
+    function loadConfiguration() {
+      const savedConfig = localStorage.getItem('roomConfig');
+      if (savedConfig) {
+        const config = JSON.parse(savedConfig);
+        roomVolume = config.roomVolume;
+        windowArea = config.windowArea;
+        windowType = config.windowType;
+        currentMood = config.currentMood;
+
+        // UI aktualisieren
+        roomVolumeInput.value = roomVolume;
+        windowAreaInput.value = windowArea;
+
+        // Fenster-Typ aktivieren
+        document.querySelectorAll('.window-btn').forEach(btn => {
+          btn.classList.remove('active');
+          if (btn.dataset.type === windowType) {
+            btn.classList.add('active');
+          }
+        });
+
+        // Stimmung aktivieren
+        document.querySelectorAll('.mood-btn').forEach(btn => {
+          btn.classList.remove('active');
+          if (btn.classList.contains(`mood-${currentMood}`)) {
+            btn.classList.add('active');
+            currentMoodElement.textContent = `Aktuelle Stimmung: ${btn.textContent.trim()}`;
+          }
+        });
+      }
+    }
+
+    // Event-Listener
     startBtn.addEventListener('click', startVentilationTimer);
     stopBtn.addEventListener('click', stopVentilationTimer);
     resetBtn.addEventListener('click', resetVentilationTimer);
@@ -878,27 +1054,43 @@
     // Mood-Buttons Event Listener
     document.querySelectorAll('.mood-btn').forEach(button => {
       button.addEventListener('click', function () {
-        // Entferne active-Klasse von allen Buttons
-        document.querySelectorAll('.mood-btn').forEach(btn => {
-          btn.classList.remove('active');
-        });
-
-        // Füge active-Klasse zum geklickten Button hinzu
+        document.querySelectorAll('.mood-btn').forEach(btn => btn.classList.remove('active'));
         this.classList.add('active');
 
-        // Setze die aktuelle Stimmung
         if (this.classList.contains('mood-perfect')) currentMood = "perfect";
         if (this.classList.contains('mood-warm')) currentMood = "warm";
         if (this.classList.contains('mood-cold')) currentMood = "cold";
         if (this.classList.contains('mood-unfocused')) currentMood = "unfocused";
         if (this.classList.contains('mood-headache')) currentMood = "headache";
 
-        // Aktualisiere die Anzeige
         currentMoodElement.textContent = `Aktuelle Stimmung: ${this.textContent.trim()}`;
-
-        // Lüftungsempfehlung neu berechnen
-        calculateVentilationRecommendation();
+        saveConfiguration();
+        updateVentilationUI();
       });
+    });
+
+    // Fenster-Typ Event Listener
+    windowTypeButtons.forEach(button => {
+      button.addEventListener('click', function () {
+        windowTypeButtons.forEach(btn => btn.classList.remove('active'));
+        this.classList.add('active');
+        windowType = this.dataset.type;
+        saveConfiguration();
+        updateVentilationUI();
+      });
+    });
+
+    // Raumkonfiguration Event Listener
+    roomVolumeInput.addEventListener('input', function () {
+      roomVolume = parseFloat(this.value) || 50;
+      saveConfiguration();
+      updateVentilationUI();
+    });
+
+    windowAreaInput.addEventListener('input', function () {
+      windowArea = parseFloat(this.value) || 2.0;
+      saveConfiguration();
+      updateVentilationUI();
     });
 
     // Wetteraktualisierung
@@ -911,43 +1103,36 @@
     database.ref('DHT_11/Temperature').on('value', (snapshot) => {
       insideTemp = snapshot.val();
       const now = new Date();
-      lastUpdateTime = now;
 
       tempValueElement.textContent = insideTemp !== null ? `${insideTemp.toFixed(1)} °C` : '-- °C';
       tempStatusElement.textContent = getTemperatureStatus(insideTemp);
+      tempLastUpdate.textContent = `Aktualisiert: ${formatTime(now)}`;
 
-      // Update last update time
-      lastUpdateElement.textContent = `Letzte Aktualisierung: ${formatTime(now)}`;
-      checkSensorStatus();
-      calculateVentilationRecommendation();
+      updateVentilationUI();
     });
 
     // Firebase Listener für Luftfeuchtigkeit
     database.ref('DHT_11/Humidity').on('value', (snapshot) => {
       insideHumidity = snapshot.val();
       const now = new Date();
-      lastUpdateTime = now;
 
       humidityValueElement.textContent = insideHumidity !== null ? `${insideHumidity.toFixed(1)} %` : '-- %';
       humidityStatusElement.textContent = getHumidityStatus(insideHumidity);
+      humidityLastUpdate.textContent = `Aktualisiert: ${formatTime(now)}`;
 
-      // Update last update time
-      lastUpdateElement.textContent = `Letzte Aktualisierung: ${formatTime(now)}`;
-      checkSensorStatus();
-      calculateVentilationRecommendation();
+      updateVentilationUI();
     });
 
-    // Initiale Statusprüfung
-    checkSensorStatus();
-
-    // Initiale Wetterdaten laden
+    // Initiale Wetterdaten laden und Konfiguration herstellen
     window.addEventListener('load', function () {
+      // Konfiguration laden
+      loadConfiguration();
+
+      // Wetterdaten laden
       fetchWeatherData(currentCity);
 
-      // Wetter alle 20 Minuten aktualisieren
-      weatherUpdateInterval = setInterval(() => {
-        fetchWeatherData(currentCity);
-      }, 20 * 60 * 1000); // 20 Minuten
+      // Regelmäßige Updates
+      setInterval(() => fetchWeatherData(currentCity), 20 * 60 * 1000);
     });
   </script>
 </body>
